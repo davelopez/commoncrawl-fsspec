@@ -1,0 +1,39 @@
+[project]
+name = "commoncrawl-fsspec"
+version = "0.1.0"
+description = "fsspec implementation for Common Crawl"
+readme = "README.md"
+authors = [
+    { name = "davelopez", email = "46503462+davelopez@users.noreply.github.com" },
+]
+requires-python = ">=3.10"
+dependencies = ["fsspec>=2026.6.0", "requests>=2.34.2", "s3fs>=2026.6.0"]
+
+[build-system]
+requires = ["uv_build>=0.11.28,<0.12.0"]
+build-backend = "uv_build"
+
+[project.entry-points."fsspec.specs"]
+cc = "commoncrawl_fsspec.filesystem.CommonCrawlFileSystem"
+
+[project.optional-dependencies]
+duckdb = ["duckdb>=1.0.0"]
+warcio = ["warcio>=1.7.0"]
+examples = ["click>=8.1.0", "rich>=13.0.0"]
+all = ["commoncrawl-fsspec[duckdb,warcio]"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "pytest-mock>=3.12.0",
+    "ruff>=0.15.21",
+    "responses>=0.25.0",
+]
+
+[tool.ruff]
+line-length = 100
+lint.select = ["E", "F", "I"]
+
+[tool.mypy]
+ignore_missing_imports = true
