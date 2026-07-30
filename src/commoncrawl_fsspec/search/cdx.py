@@ -23,7 +23,7 @@ class CdxSearchBackend(SearchBackend):
         self, http_client: HttpClient, cdx_api_map: Optional[Dict[str, str]] = None
     ):
         self.http_client = http_client
-        self.cdx_api_map = cdx_api_map or {}
+        self.cdx_api_map = cdx_api_map if cdx_api_map is not None else {}
 
     def _get_cdx_url(self, crawl_id: str) -> str:
         """Get the CDX API URL for a crawl."""
