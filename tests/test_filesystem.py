@@ -4,7 +4,6 @@ import gzip
 
 import pytest
 import responses
-from unittest.mock import Mock, patch, MagicMock
 from commoncrawl_fsspec.filesystem import CommonCrawlFileSystem
 from commoncrawl_fsspec.constants import COLLINFO_URL
 from commoncrawl_fsspec.paths import PathResolver
