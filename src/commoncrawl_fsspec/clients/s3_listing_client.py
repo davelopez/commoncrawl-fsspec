@@ -66,38 +66,33 @@ class S3ListingClient:
                 segments.add(parts[3])
         return sorted(segments)
 
-    def list_prefix(self, prefix: str, delimiter: str = "/") -> List[WarcFileInfo]:
-        """List files under a crawl-data prefix."""
-        parts = prefix.strip("/").split("/")
-        if len(parts) == 3 and parts[0] == "crawl-data" and parts[2] == "segments":
-            crawl_id = parts[1]
-            return [
-                WarcFileInfo(name=segment_id, size=0)
-                for segment_id in self._iter_segments(crawl_id)
-            ]
+    def list_segments(self, crawl_id: str) -> List[WarcFileInfo]:
+        """List segments for a crawl via the warc.paths.gz manifest."""
+        return [
+            WarcFileInfo(name=segment_id, size=0)
+            for segment_id in self._iter_segments(crawl_id)
+        ]
 
-        if len(parts) == 5 and parts[0] == "crawl-data" and parts[2] == "segments":
-            crawl_id = parts[1]
-            segment_id = parts[3]
-            file_type = parts[4]
-            entries = []
-            for path in self._iter_files(crawl_id, segment_id, file_type):
-                name = path.split("/")[-1]
-                info = self.get_file_info(path)
-                entries.append(
-                    WarcFileInfo(
-                        name=name,
-                        size=info["Size"] if info else 0,
-                        last_modified=(
-                            info["LastModified"].timestamp()
-                            if info and info.get("LastModified")
-                            else None
-                        ),
-                    )
+    def list_files(
+        self, crawl_id: str, segment_id: str, file_type: str
+    ) -> List[WarcFileInfo]:
+        """List files within a segment's file-type directory via manifest."""
+        entries = []
+        for path in self._iter_files(crawl_id, segment_id, file_type):
+            name = path.split("/")[-1]
+            info = self.get_file_info(path)
+            entries.append(
+                WarcFileInfo(
+                    name=name,
+                    size=info["Size"] if info else 0,
+                    last_modified=(
+                        info["LastModified"].timestamp()
+                        if info and info.get("LastModified")
+                        else None
+                    ),
                 )
-            return entries
-
-        return []
+            )
+        return entries
 
     def get_file_info(self, s3_key: str) -> Optional[dict]:
         """Get info for a single Common Crawl object."""
