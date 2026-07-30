@@ -19,8 +19,7 @@ logger = logging.getLogger(__name__)
 class S3ListingClient:
     """Client for browsing Common Crawl crawl-data files."""
 
-    def __init__(self, anon: bool = True, http_client: Optional[HttpClient] = None):
-        self.anon = anon
+    def __init__(self, http_client: Optional[HttpClient] = None):
         self.http_client = http_client or HttpClient()
         self._http_fs = None
         self._manifest_cache: Dict[Tuple[str, str], List[str]] = {}

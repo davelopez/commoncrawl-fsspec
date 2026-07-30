@@ -78,7 +78,6 @@ class CommonCrawlFileSystem(AbstractFileSystem):
     def __init__(
         self,
         search_backend: str = "cdx",
-        anon: bool = True,
         max_search_results: int = DEFAULT_MAX_SEARCH_RESULTS,
         cache_ttl: int = DEFAULT_CACHE_TTL,
         **storage_options,
@@ -87,7 +86,6 @@ class CommonCrawlFileSystem(AbstractFileSystem):
 
         Args:
             search_backend: Search backend to use ("cdx" or "parquet")
-            anon: Use anonymous S3 access
             max_search_results: Maximum number of search results to return
             cache_ttl: Cache TTL in seconds
             **storage_options: Additional storage options passed to AbstractFileSystem
@@ -96,9 +94,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
 
         self.http_client = HttpClient()
         self.crawl_index_client = CrawlIndexClient(self.http_client)
-        self.s3_listing_client = S3ListingClient(
-            anon=anon, http_client=self.http_client
-        )
+        self.s3_listing_client = S3ListingClient(http_client=self.http_client)
         self.warc_fetcher = WarcRecordFetcher(self.http_client)
 
         self.crawl_list_cache = CrawlListCache(ttl=cache_ttl)
