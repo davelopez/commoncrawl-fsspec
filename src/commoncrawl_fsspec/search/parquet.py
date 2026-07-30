@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from ..constants import DATA_BASE_URL
+from ..constants import DATA_BASE_URL, S3_INDEX_PREFIX
 from ..models import SearchRecord
 from .base import SearchBackend, SearchQuery, SearchResult
 
@@ -33,7 +33,10 @@ class ParquetSearchBackend(SearchBackend):
 
     def _build_parquet_url(self, crawl_id: str) -> str:
         """Build the parquet URL for a crawl."""
-        return f"{DATA_BASE_URL}/cc-index/table/cc-main/warc/crawl={crawl_id}/subset=warc/*.parquet"
+        return (
+            f"{DATA_BASE_URL}/{S3_INDEX_PREFIX}"
+            f"crawl={crawl_id}/subset=warc/*.parquet"
+        )
 
     def search(self, query: SearchQuery) -> SearchResult:
         """Search for records using DuckDB and Parquet."""
