@@ -1,40 +1,8 @@
 """Tests for caching utilities."""
 
 import time
-from commoncrawl_fsspec.caching import TTLCache, CrawlListCache, RecordCache
+from commoncrawl_fsspec.caching import CrawlListCache, RecordCache
 from commoncrawl_fsspec.models import SearchRecord
-
-
-class TestTTLCache:
-    """Test TTLCache."""
-
-    def test_put_and_get(self):
-        cache = TTLCache(ttl=60)
-        cache.put("key", "value")
-        assert cache.get("key") == "value"
-
-    def test_expired_entry(self):
-        cache = TTLCache(ttl=0.1)
-        cache.put("key", "value")
-        time.sleep(0.2)
-        assert cache.get("key") is None
-
-    def test_missing_key(self):
-        cache = TTLCache()
-        assert cache.get("missing") is None
-
-    def test_clear(self):
-        cache = TTLCache()
-        cache.put("key", "value")
-        cache.clear()
-        assert cache.get("key") is None
-
-    def test_max_size_eviction(self):
-        cache = TTLCache(max_size=2)
-        cache.put("key1", "value1")
-        cache.put("key2", "value2")
-        cache.put("key3", "value3")
-        assert cache.get("key1") is None
 
 
 class TestCrawlListCache:

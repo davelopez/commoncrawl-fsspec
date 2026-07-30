@@ -4,44 +4,9 @@ from __future__ import annotations
 
 import time
 from collections import OrderedDict
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Optional
 
-from .models import CrawlInfo, SearchRecord
-
-T = TypeVar("T")
-
-
-class TTLCache(Generic[T]):
-    """Simple TTL-based cache."""
-
-    def __init__(self, ttl: int = 86400, max_size: int = 1000):
-        self.ttl = ttl
-        self.max_size = max_size
-        self._cache: Dict[str, tuple] = {}
-
-    def get(self, key: str) -> Optional[T]:
-        """Get a value from the cache if it exists and is not expired."""
-        if key not in self._cache:
-            return None
-
-        value, expiry = self._cache[key]
-        if time.time() > expiry:
-            del self._cache[key]
-            return None
-
-        return value
-
-    def put(self, key: str, value: T) -> None:
-        """Put a value in the cache."""
-        if len(self._cache) >= self.max_size:
-            oldest_key = next(iter(self._cache))
-            del self._cache[oldest_key]
-
-        self._cache[key] = (value, time.time() + self.ttl)
-
-    def clear(self) -> None:
-        """Clear the cache."""
-        self._cache.clear()
+from .models import SearchRecord
 
 
 class CrawlListCache:
