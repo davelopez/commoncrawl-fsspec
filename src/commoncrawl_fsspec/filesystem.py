@@ -107,14 +107,14 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         self.crawl_list_cache = CrawlListCache(ttl=cache_ttl)
         self.record_cache = RecordCache()
 
+        self._cdx_api_map: dict[str, str] = {}
         self.search_backend: SearchBackend = create_search_backend(
             search_backend,
             self.http_client,
-            cdx_api_map={},
+            cdx_api_map=self._cdx_api_map,
         )
 
         self.max_search_results = max_search_results
-        self._cdx_api_map: dict[str, str] = {}
 
     def _get_crawl_list(self) -> list:
         """Get the list of crawls, using cache if available."""
@@ -127,12 +127,6 @@ class CommonCrawlFileSystem(AbstractFileSystem):
 
         for crawl in crawls:
             self._cdx_api_map[crawl.id] = crawl.cdx_api
-
-        self.search_backend = create_search_backend(
-            "cdx",
-            self.http_client,
-            self._cdx_api_map,
-        )
 
         return crawls
 

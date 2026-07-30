@@ -62,7 +62,6 @@ class CdxSearchBackend(SearchBackend):
             raise
 
         records = []
-        total = 0
 
         for line in text.strip().split("\n"):
             if not line:
