@@ -21,7 +21,7 @@ class WarcRecordFetcher:
     def fetch_record(self, filename: str, offset: int, length: int) -> bytes:
         """Fetch a WARC record using HTTP byte range."""
         url = f"{DATA_BASE_URL}/{filename}"
-        return self.http_client.get_range(url, offset, offset + length - 1)
+        return self.http_client.get_range(url, offset, offset + length)
 
     def fetch_record_stream(
         self, filename: str, offset: int, length: int
@@ -36,14 +36,14 @@ class WarcRecordFetcher:
         Requires warcio to be installed.
         """
         try:
-            import warcio
+            from warcio import ArchiveIterator
         except ImportError:
             raise ImportError(
                 "warcio is required to extract response payloads. "
                 "Install with: pip install commoncrawl-fsspec[warcio]"
             )
 
-        archive = warcio.ArchiveIterator(io.BytesIO(record_bytes))
+        archive = ArchiveIterator(io.BytesIO(record_bytes))
         for record in archive:
             if record.rec_type == "response":
                 return record.raw_stream.read()

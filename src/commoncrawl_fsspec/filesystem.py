@@ -324,18 +324,16 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         vp = PathResolver.parse(path)
 
         if vp.kind == PathKind.WARC_FILE:
-            prefix = (
-                f"crawl-data/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/"
-            )
-            s3_key = f"{prefix}{vp.filename}"
-            return self.s3_listing_client.cat_file(s3_key, start, end)
+            return self.s3_listing_client.cat_file(vp.to_s3_key(), start, end)
         elif vp.kind == PathKind.RECORD:
             filename, offset, length = PathResolver.decode_record_token(vp.record_token)
-            if end is not None:
-                actual_end = min(offset + length, end)
-            else:
-                actual_end = offset + length
-            return self.warc_fetcher.fetch_record(filename, start, actual_end)
+            actual_start = offset + start
+            actual_end = min(
+                offset + length, end if end is not None else offset + length
+            )
+            return self.warc_fetcher.fetch_record(
+                filename, actual_start, actual_end - actual_start
+            )
 
         raise FileNotFoundError(path)
 
