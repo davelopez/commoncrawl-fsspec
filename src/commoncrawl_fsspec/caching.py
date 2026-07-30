@@ -6,6 +6,7 @@ import time
 from collections import OrderedDict
 from typing import Optional
 
+from .constants import MAX_RECORD_CACHE_SIZE
 from .models import SearchRecord
 
 
@@ -40,7 +41,7 @@ class CrawlListCache:
 class RecordCache:
     """LRU cache for search records."""
 
-    def __init__(self, max_size: int = 10000):
+    def __init__(self, max_size: int = MAX_RECORD_CACHE_SIZE):
         self.max_size = max_size
         self._cache: OrderedDict = OrderedDict()
 
