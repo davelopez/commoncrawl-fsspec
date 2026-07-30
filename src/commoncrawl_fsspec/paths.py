@@ -35,6 +35,16 @@ class VirtualPath:
     record_token: Optional[str] = None
     raw_path: str = ""
 
+    def to_s3_prefix(self) -> str:
+        """Build the S3 prefix for this path's file-type directory."""
+        return (
+            f"crawl-data/{self.crawl_id}/segments/{self.segment_id}/{self.file_type}/"
+        )
+
+    def to_s3_key(self) -> str:
+        """Build the full S3 key for this path's WARC file."""
+        return f"{self.to_s3_prefix()}{self.filename}"
+
 
 class PathResolver:
     """Parse and build virtual paths."""
@@ -115,9 +125,15 @@ class PathResolver:
         if kind == PathKind.SEGMENT:
             return f"/crawls/{kwargs['crawl_id']}/segments/{kwargs['segment_id']}"
         if kind == PathKind.FILE_TYPE:
-            return f"/crawls/{kwargs['crawl_id']}/segments/{kwargs['segment_id']}/{kwargs['file_type']}"
+            return (
+                f"/crawls/{kwargs['crawl_id']}/segments/{kwargs['segment_id']}"
+                f"/{kwargs['file_type']}"
+            )
         if kind == PathKind.WARC_FILE:
-            return f"/crawls/{kwargs['crawl_id']}/segments/{kwargs['segment_id']}/{kwargs['file_type']}/{kwargs['filename']}"
+            return (
+                f"/crawls/{kwargs['crawl_id']}/segments/{kwargs['segment_id']}"
+                f"/{kwargs['file_type']}/{kwargs['filename']}"
+            )
         if kind == PathKind.SEARCH:
             return "/search"
         if kind == PathKind.SEARCH_CRAWL:
