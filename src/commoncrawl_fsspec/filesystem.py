@@ -148,16 +148,26 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         elif vp.kind == PathKind.CRAWLS:
             crawls = self._get_crawl_list()
             entries = [
-                {"name": f"/crawls/{crawl.id}", "type": "directory"} for crawl in crawls
+                {
+                    "name": PathResolver.build(PathKind.CRAWL, crawl_id=crawl.id),
+                    "type": "directory",
+                }
+                for crawl in crawls
             ]
         elif vp.kind == PathKind.CRAWL:
-            entries = [{"name": f"/crawls/{vp.crawl_id}/segments", "type": "directory"}]
-        elif vp.kind == PathKind.SEGMENTS:
-            prefix = f"crawl-data/{vp.crawl_id}/segments/"
-            segments = self.s3_listing_client.list_prefix(prefix)
             entries = [
                 {
-                    "name": f"/crawls/{vp.crawl_id}/segments/{seg.name}",
+                    "name": PathResolver.build(PathKind.SEGMENTS, crawl_id=vp.crawl_id),
+                    "type": "directory",
+                }
+            ]
+        elif vp.kind == PathKind.SEGMENTS:
+            segments = self.s3_listing_client.list_segments(vp.crawl_id)
+            entries = [
+                {
+                    "name": PathResolver.build(
+                        PathKind.SEGMENT, crawl_id=vp.crawl_id, segment_id=seg.name
+                    ),
                     "type": "directory",
                 }
                 for seg in segments
@@ -165,26 +175,29 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         elif vp.kind == PathKind.SEGMENT:
             entries = [
                 {
-                    "name": f"/crawls/{vp.crawl_id}/segments/{vp.segment_id}/warc",
+                    "name": PathResolver.build(
+                        PathKind.FILE_TYPE,
+                        crawl_id=vp.crawl_id,
+                        segment_id=vp.segment_id,
+                        file_type=ft,
+                    ),
                     "type": "directory",
-                },
-                {
-                    "name": f"/crawls/{vp.crawl_id}/segments/{vp.segment_id}/wet",
-                    "type": "directory",
-                },
-                {
-                    "name": f"/crawls/{vp.crawl_id}/segments/{vp.segment_id}/wat",
-                    "type": "directory",
-                },
+                }
+                for ft in ("warc", "wet", "wat")
             ]
         elif vp.kind == PathKind.FILE_TYPE:
-            prefix = (
-                f"crawl-data/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/"
+            files = self.s3_listing_client.list_files(
+                vp.crawl_id, vp.segment_id, vp.file_type
             )
-            files = self.s3_listing_client.list_prefix(prefix)
             entries = [
                 {
-                    "name": f"/crawls/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/{f.name}",
+                    "name": PathResolver.build(
+                        PathKind.WARC_FILE,
+                        crawl_id=vp.crawl_id,
+                        segment_id=vp.segment_id,
+                        file_type=vp.file_type,
+                        filename=f.name,
+                    ),
                     "type": "file",
                     "size": f.size,
                     "mtime": f.last_modified,
@@ -194,7 +207,13 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         elif vp.kind == PathKind.SEARCH:
             crawls = self._get_crawl_list()
             entries = [
-                {"name": f"/search/{crawl.id}", "type": "directory"} for crawl in crawls
+                {
+                    "name": PathResolver.build(
+                        PathKind.SEARCH_CRAWL, crawl_id=crawl.id
+                    ),
+                    "type": "directory",
+                }
+                for crawl in crawls
             ]
         elif vp.kind == PathKind.SEARCH_CRAWL:
             entries = []
@@ -209,23 +228,19 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         """Get info about a path."""
         vp = PathResolver.parse(path)
 
-        if vp.kind == PathKind.ROOT:
-            return {"name": "/", "type": "directory"}
-        elif vp.kind in (PathKind.CRAWLS, PathKind.SEARCH):
-            return {"name": path, "type": "directory"}
-        elif vp.kind == PathKind.CRAWL:
-            return {"name": path, "type": "directory"}
-        elif vp.kind == PathKind.SEGMENTS:
-            return {"name": path, "type": "directory"}
-        elif vp.kind == PathKind.SEGMENT:
-            return {"name": path, "type": "directory"}
-        elif vp.kind == PathKind.FILE_TYPE:
+        if vp.kind in (
+            PathKind.ROOT,
+            PathKind.CRAWLS,
+            PathKind.CRAWL,
+            PathKind.SEGMENTS,
+            PathKind.SEGMENT,
+            PathKind.FILE_TYPE,
+            PathKind.SEARCH,
+            PathKind.SEARCH_CRAWL,
+        ):
             return {"name": path, "type": "directory"}
         elif vp.kind == PathKind.WARC_FILE:
-            prefix = (
-                f"crawl-data/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/"
-            )
-            s3_key = f"{prefix}{vp.filename}"
+            s3_key = vp.to_s3_key()
             info = self.s3_listing_client.get_file_info(s3_key)
             if info:
                 return {
@@ -235,8 +250,6 @@ class CommonCrawlFileSystem(AbstractFileSystem):
                     "mtime": info["LastModified"].timestamp(),
                 }
             return {"name": path, "type": "file", "size": 0}
-        elif vp.kind == PathKind.SEARCH_CRAWL:
-            return {"name": path, "type": "directory"}
         elif vp.kind == PathKind.RECORD:
             record = self.record_cache.get(vp.record_token)
             if record:
@@ -278,7 +291,9 @@ class CommonCrawlFileSystem(AbstractFileSystem):
                     record.filename, record.offset, record.length
                 )
                 self.record_cache.put(token, record)
-                record_path = f"/search/{vp.crawl_id}/{token}"
+                record_path = PathResolver.build(
+                    PathKind.RECORD, crawl_id=vp.crawl_id, record_token=token
+                )
                 entries.append(
                     {
                         "name": record_path,
@@ -303,11 +318,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         vp = PathResolver.parse(path)
 
         if vp.kind == PathKind.WARC_FILE:
-            prefix = (
-                f"crawl-data/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/"
-            )
-            s3_key = f"{prefix}{vp.filename}"
-            return self.s3_listing_client.open(s3_key, mode)
+            return self.s3_listing_client.open(vp.to_s3_key(), mode)
         elif vp.kind == PathKind.RECORD:
             filename, offset, length = PathResolver.decode_record_token(vp.record_token)
             return CommonCrawlRecordFile(self.warc_fetcher, filename, offset, length)
@@ -339,11 +350,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
         vp = PathResolver.parse(rpath)
 
         if vp.kind == PathKind.WARC_FILE:
-            prefix = (
-                f"crawl-data/{vp.crawl_id}/segments/{vp.segment_id}/{vp.file_type}/"
-            )
-            s3_key = f"{prefix}{vp.filename}"
-            self.s3_listing_client.get_file(s3_key, lpath)
+            self.s3_listing_client.get_file(vp.to_s3_key(), lpath)
         elif vp.kind == PathKind.RECORD:
             filename, offset, length = PathResolver.decode_record_token(vp.record_token)
             data = self.warc_fetcher.fetch_record(filename, offset, length)
