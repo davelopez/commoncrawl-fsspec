@@ -6,7 +6,6 @@ INDEX_BASE_URL = "https://index.commoncrawl.org"
 COLLINFO_URL = "https://index.commoncrawl.org/collinfo.json"
 
 # S3
-S3_BUCKET = "commoncrawl"
 S3_INDEX_PREFIX = "cc-index/table/cc-main/warc/"
 
 # Defaults
