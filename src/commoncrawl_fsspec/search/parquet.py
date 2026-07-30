@@ -50,6 +50,7 @@ class ParquetSearchBackend(SearchBackend):
             LIMIT ? OFFSET ?
         """
 
+        conn = None
         try:
             conn = self.duckdb.connect()
             rows = conn.execute(
@@ -75,7 +76,8 @@ class ParquetSearchBackend(SearchBackend):
 
             return SearchResult(records=records, total=len(records))
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
 
     def count(self, query: SearchQuery) -> int:
         """Count records using DuckDB and Parquet."""
@@ -87,9 +89,11 @@ class ParquetSearchBackend(SearchBackend):
             WHERE url LIKE ?
         """
 
+        conn = None
         try:
             conn = self.duckdb.connect()
             result = conn.execute(sql, [parquet_url, query.url_pattern]).fetchone()
             return result[0] if result else 0
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
