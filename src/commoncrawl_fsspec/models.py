@@ -3,15 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
-
-
-class EntryType(str, Enum):
-    """Entry types for filesystem listings."""
-
-    DIRECTORY = "directory"
-    FILE = "file"
 
 
 @dataclass(frozen=True)
@@ -47,13 +39,3 @@ class SearchRecord:
     length: int
     offset: int
     filename: str
-
-
-@dataclass(frozen=True)
-class FsEntry:
-    """A filesystem entry returned by ls/info."""
-
-    name: str
-    type: EntryType
-    size: int = 0
-    mtime: Optional[float] = None
