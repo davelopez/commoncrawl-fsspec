@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
 
 from ..constants import DATA_BASE_URL
 from ..models import SearchRecord

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import Any, Dict, List, Optional, Tuple
 
 from fsspec import AbstractFileSystem
 
@@ -16,11 +15,9 @@ from .clients.warc_fetcher import WarcRecordFetcher
 from .constants import (
     DEFAULT_CACHE_TTL,
     DEFAULT_MAX_SEARCH_RESULTS,
-    S3_BUCKET,
 )
-from .models import EntryType, FsEntry, SearchRecord
-from .paths import PathKind, PathResolver, VirtualPath
-from .search.base import SearchBackend, SearchQuery, SearchResult
+from .paths import PathKind, PathResolver
+from .search.base import SearchBackend, SearchQuery
 from .search.factory import create_search_backend
 
 logger = logging.getLogger(__name__)

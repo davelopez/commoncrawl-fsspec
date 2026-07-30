@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from requests import HTTPError
 
+from ..clients.http_client import HttpClient
 from ..constants import INDEX_BASE_URL
 from ..models import SearchRecord
-from ..clients.http_client import HttpClient
 from .base import SearchBackend, SearchQuery, SearchResult
 
 logger = logging.getLogger(__name__)
