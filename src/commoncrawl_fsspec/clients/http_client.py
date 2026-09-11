@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -12,6 +13,23 @@ from urllib3.util.retry import Retry
 from ..constants import DEFAULT_REQUEST_TIMEOUT, DEFAULT_USER_AGENT
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_HOSTS = frozenset(
+    {
+        "data.commoncrawl.org",
+        "index.commoncrawl.org",
+    }
+)
+
+
+def _validate_url(url: str) -> str:
+    """Validate that a URL uses HTTPS and points to an allowed host."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise ValueError(f"Refusing non-HTTPS URL: {url}")
+    if parsed.hostname not in ALLOWED_HOSTS:
+        raise ValueError(f"URL host not in allowlist: {parsed.hostname}")
+    return url
 
 
 class HttpClient:
@@ -39,24 +57,28 @@ class HttpClient:
 
     def get_json(self, url: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """GET request returning parsed JSON."""
+        _validate_url(url)
         resp = self.session.get(url, params=params, timeout=self.timeout)
         resp.raise_for_status()
         return resp.json()
 
     def get_text(self, url: str, params: Optional[Dict[str, Any]] = None) -> str:
         """GET request returning text."""
+        _validate_url(url)
         resp = self.session.get(url, params=params, timeout=self.timeout)
         resp.raise_for_status()
         return resp.text
 
     def get_bytes(self, url: str, params: Optional[Dict[str, Any]] = None) -> bytes:
         """GET request returning raw bytes."""
+        _validate_url(url)
         resp = self.session.get(url, params=params, timeout=self.timeout)
         resp.raise_for_status()
         return resp.content
 
     def head(self, url: str, params: Optional[Dict[str, Any]] = None):
         """HEAD request returning the response object."""
+        _validate_url(url)
         resp = self.session.head(
             url,
             params=params,
@@ -68,6 +90,7 @@ class HttpClient:
 
     def get_range(self, url: str, start: int, end: int) -> bytes:
         """GET request with byte range header."""
+        _validate_url(url)
         headers = {"Range": f"bytes={start}-{end - 1}"}
         resp = self.session.get(url, headers=headers, timeout=self.timeout, stream=True)
         resp.raise_for_status()
