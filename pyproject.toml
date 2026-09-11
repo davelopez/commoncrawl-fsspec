@@ -6,6 +6,7 @@ readme = "README.md"
 authors = [
     { name = "davelopez", email = "46503462+davelopez@users.noreply.github.com" },
 ]
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = ["fsspec>=2026.6.0", "requests>=2.34.2", "s3fs>=2026.6.0"]
 
