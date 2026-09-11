@@ -1,6 +1,5 @@
 """Tests for WARC record fetcher."""
 
-import pytest
 import responses
 from commoncrawl_fsspec.clients.http_client import HttpClient
 from commoncrawl_fsspec.clients.warc_fetcher import WarcRecordFetcher
@@ -56,11 +55,3 @@ class TestWarcRecordFetcher:
         stream = fetcher.fetch_record_stream(filename, offset, length)
 
         assert stream.read() == mock_data
-
-    def test_extract_payload_requires_warcio(self):
-        """Test that extract_payload raises ImportError without warcio."""
-        http_client = HttpClient()
-        fetcher = WarcRecordFetcher(http_client)
-
-        with pytest.raises(ImportError):
-            fetcher.extract_response_payload(b"test data")

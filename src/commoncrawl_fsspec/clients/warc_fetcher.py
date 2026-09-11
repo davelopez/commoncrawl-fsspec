@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import logging
-from typing import Optional
 
 from ..constants import DATA_BASE_URL
 from .http_client import HttpClient
@@ -29,22 +28,3 @@ class WarcRecordFetcher:
         """Fetch a WARC record and return as a BytesIO stream."""
         data = self.fetch_record(filename, offset, length)
         return io.BytesIO(data)
-
-    def extract_response_payload(self, record_bytes: bytes) -> Optional[bytes]:
-        """Extract the HTTP response payload from a WARC record.
-
-        Requires warcio to be installed.
-        """
-        try:
-            from warcio import ArchiveIterator
-        except ImportError:
-            raise ImportError(
-                "warcio is required to extract response payloads. "
-                "Install with: pip install commoncrawl-fsspec[warcio]"
-            )
-
-        archive = ArchiveIterator(io.BytesIO(record_bytes))
-        for record in archive:
-            if record.rec_type == "response":
-                return record.raw_stream.read()
-        return None
