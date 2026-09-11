@@ -6,8 +6,6 @@ import pytest
 import responses
 from commoncrawl_fsspec.filesystem import CommonCrawlFileSystem
 from commoncrawl_fsspec.constants import COLLINFO_URL
-from commoncrawl_fsspec.paths import PathResolver
-from commoncrawl_fsspec.models import SearchRecord
 
 
 class TestCommonCrawlFileSystem:
@@ -89,10 +87,9 @@ class TestCommonCrawlFileSystem:
         fs = CommonCrawlFileSystem()
         entries = fs.ls("/")
 
-        assert len(entries) == 2
+        assert len(entries) == 1
         names = [e["name"] for e in entries]
         assert "/crawls" in names
-        assert "/search" in names
 
     @responses.activate
     def test_ls_crawls(self):
@@ -116,26 +113,6 @@ class TestCommonCrawlFileSystem:
         assert entries[0]["type"] == "directory"
 
     @responses.activate
-    def test_ls_search(self):
-        """Test listing search directory."""
-        mock_data = [
-            {
-                "id": "CC-MAIN-2024-33",
-                "name": "CC-MAIN-2024-33",
-                "cdx_api": "https://index.commoncrawl.org/CC-MAIN-2024-33-index",
-                "time_from": "20240801000000",
-                "time_to": "20240831235959",
-            },
-        ]
-        responses.add(responses.GET, COLLINFO_URL, json=mock_data, status=200)
-
-        fs = CommonCrawlFileSystem()
-        entries = fs.ls("/search")
-
-        assert len(entries) == 1
-        assert entries[0]["name"] == "/search/CC-MAIN-2024-33"
-
-    @responses.activate
     def test_info_root(self):
         """Test info on root."""
         mock_data = []
@@ -146,33 +123,6 @@ class TestCommonCrawlFileSystem:
 
         assert info["name"] == "/"
         assert info["type"] == "directory"
-
-    @responses.activate
-    def test_info_record(self):
-        """Test info on record path."""
-        mock_data = []
-        responses.add(responses.GET, COLLINFO_URL, json=mock_data, status=200)
-
-        fs = CommonCrawlFileSystem()
-        token = PathResolver.encode_record_token("test.warc.gz", 1000, 500)
-        record = SearchRecord(
-            urlkey="example.com",
-            timestamp="20240801120000",
-            url="http://example.com",
-            mime="text/html",
-            status="200",
-            digest="abc123",
-            length=500,
-            offset=1000,
-            filename="test.warc.gz",
-        )
-        fs.record_cache.put(token, record)
-
-        info = fs.info(f"/search/CC-MAIN-2024-33/{token}")
-
-        assert info["name"] == f"/search/CC-MAIN-2024-33/{token}"
-        assert info["type"] == "file"
-        assert info["size"] == 500
 
     @responses.activate
     def test_info_warc_file(self):

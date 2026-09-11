@@ -1,4 +1,4 @@
-"""Common Crawl CLI — browse, search, and download from Common Crawl."""
+"""Common Crawl CLI — browse and download from Common Crawl."""
 
 from __future__ import annotations
 
@@ -20,7 +20,6 @@ try:
     from rich.table import Table
     from rich.panel import Panel
     from rich import box
-    from commoncrawl_fsspec.search.base import SearchQuery
 except ImportError:
     print(
         "Error: rich is required. Install with: pip install commoncrawl-fsspec[examples]"
@@ -107,14 +106,6 @@ def render_entries(
     return dir_paths, file_paths
 
 
-def run_search(fs, crawl_id: str, pattern: str, limit: int):
-    """Run a URL-pattern search against the active crawl."""
-    fs._get_crawl_list()
-    query = SearchQuery(crawl_id=crawl_id, url_pattern=pattern, limit=limit)
-    result = fs.search_backend.search(query)
-    return result.records
-
-
 def interactive_shell(start_path: str = "/") -> None:
     """Launch an interactive browsing shell."""
     fs = get_fs()
@@ -131,8 +122,6 @@ def interactive_shell(start_path: str = "/") -> None:
             "  [bold]/[/bold]                 Go to root\n"
             "  [bold]back[/bold]              Go back in history\n"
             "  [bold]cd <path>[/bold]         Change to absolute path\n"
-            "  [bold]search <pattern>[/bold]  Search URLs in current crawl\n"
-            "                         Use URL patterns like https://example.com/*\n"
             "  [bold]cat <num>[/bold]         Display file contents\n"
             "  [bold]dl <num> <file>[/bold]   Download file to disk\n"
             "  [bold]info <num>[/bold]        Show file metadata\n"
@@ -223,64 +212,6 @@ def interactive_shell(start_path: str = "/") -> None:
                 render_entries(target, entries, show_numbers=False)
             except Exception as e:
                 console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
-            continue
-
-        # --- Search ---
-        elif cmd == "search":
-            if not args:
-                console.print("[yellow]Usage: search <pattern>[/yellow]")
-                continue
-            # Try to extract crawl_id from current path
-            if "/search/" in cwd:
-                crawl_id = cwd.split("/search/")[1].split("/")[0]
-            elif "/crawls/" in cwd:
-                crawl_id = cwd.split("/crawls/")[1].split("/")[0]
-            else:
-                console.print(
-                    "[yellow]Navigate to /crawls/<id> or /search/<id> first[/yellow]"
-                )
-                continue
-
-            pattern = args.strip()
-            with console.status(
-                f"[cyan]Searching [bold]{crawl_id}[/bold] for [green]{pattern}[/green]..."
-            ):
-                try:
-                    results = run_search(fs, crawl_id, pattern, fs.max_search_results)
-                except Exception as e:
-                    console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
-                    continue
-
-            if not results:
-                console.print(
-                    Panel(
-                        f"No results for [green]'{pattern}'[/green]",
-                        title="[yellow]Search[/yellow]",
-                        border_style="yellow",
-                    )
-                )
-                continue
-
-            results = results[:50]
-            table = Table(box=box.SIMPLE, show_header=True, header_style="bold cyan")
-            table.add_column("№", style="bold yellow", width=4, justify="right")
-            table.add_column("URL", style="cyan", no_wrap=True)
-            table.add_column("MIME", style="magenta", width=20)
-            table.add_column("Size", style="green", justify="right", width=10)
-
-            for i, entry in enumerate(results, 1):
-                url = getattr(entry, "url", "")
-                mime = getattr(entry, "mime", "")
-                size = format_size(getattr(entry, "length", 0))
-                table.add_row(str(i), url, mime, size)
-
-            console.print(
-                Panel(
-                    table,
-                    title=f"[green]{len(results)} results[/green] for [bold]{pattern}[/bold]",
-                    border_style="green",
-                )
-            )
             continue
 
         # --- File operations by number ---
@@ -419,18 +350,17 @@ def interactive_shell(start_path: str = "/") -> None:
 @click.pass_context
 @click.version_option()
 def cli(ctx):
-    """🌐 Browse, search, and download data from [bold cyan]Common Crawl[/].
+    """🌐 Browse and download data from [bold cyan]Common Crawl[/].
 
-    \\b
+    \b
     Run with [bold]interactive[/bold] for an interactive browser.
 
     Examples:
       [bold]cc interactive[/bold]                     Interactive browser
       [bold]cc ls /[/]                              List top-level directories
       [bold]cc ls /crawls[/]                        List available crawls
-      [bold]cc search CC-MAIN-2024-10 "example.com"[/]  Search URLs
-      [bold]cc cat /search/.../token[/]             Read a record
-      [bold]cc download /search/.../token out.warc[/]   Download a record
+      [bold]cc cat /crawls/.../file.warc.gz[/]       Read a file
+      [bold]cc download /crawls/.../file.warc.gz out.warc[/]  Download a file
     """
     if ctx.invoked_subcommand is None:
         ctx.get_help()
@@ -467,55 +397,6 @@ def ls_cmd(path: str):
         return
 
     render_entries(path, entries, show_numbers=False)
-
-
-@cli.command()
-@click.argument("crawl_id")
-@click.argument("pattern")
-@click.option("--limit", "-n", default=20, help="Maximum number of results.")
-def search(crawl_id: str, pattern: str, limit: int):
-    """Search for URLs in a crawl using a CDX URL pattern."""
-    fs = get_fs()
-
-    with console.status(
-        f"[cyan]Searching [bold]{crawl_id}[/bold] for [green]{pattern}[/green]..."
-    ):
-        try:
-            entries = run_search(fs, crawl_id, pattern, limit)
-        except Exception as e:
-            console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
-            sys.exit(1)
-
-    if not entries:
-        console.print(
-            Panel(
-                f"No results found for [green]'{pattern}'[/green] in [bold]{crawl_id}[/bold]",
-                title="[yellow]Search Results[/yellow]",
-                border_style="yellow",
-            )
-        )
-        return
-
-    results = entries[:limit]
-
-    table = Table(box=box.SIMPLE, show_header=True, header_style="bold cyan")
-    table.add_column("URL", style="cyan", no_wrap=True)
-    table.add_column("MIME", style="magenta", width=20)
-    table.add_column("Status", style="yellow", width=6)
-    table.add_column("Size", style="green", justify="right", width=10)
-    table.add_column("Timestamp", style="dim", width=14)
-
-    for entry in results:
-        url = getattr(entry, "url", "")
-        mime = getattr(entry, "mime", "")
-        status = getattr(entry, "status", "")
-        size = format_size(getattr(entry, "length", 0))
-        ts = getattr(entry, "timestamp", "")
-
-        table.add_row(url, mime, status, size, ts)
-
-    title = f"[bold green]Found {len(results)} result(s)[/bold green] for [green]'{pattern}'[/green] in [bold]{crawl_id}[/bold]"
-    console.print(Panel(table, title=title, border_style="green"))
 
 
 @cli.command()
