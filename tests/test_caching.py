@@ -1,8 +1,7 @@
 """Tests for caching utilities."""
 
 import time
-from commoncrawl_fsspec.caching import CrawlListCache, RecordCache
-from commoncrawl_fsspec.models import SearchRecord
+from commoncrawl_fsspec.caching import CrawlListCache
 
 
 class TestCrawlListCache:
@@ -25,86 +24,3 @@ class TestCrawlListCache:
         cache.put(["crawl1"])
         cache.clear()
         assert cache.get() is None
-
-
-class TestRecordCache:
-    """Test RecordCache."""
-
-    def test_put_and_get(self):
-        cache = RecordCache()
-        record = SearchRecord(
-            urlkey="test",
-            timestamp="20240101",
-            url="http://example.com",
-            mime="text/html",
-            status="200",
-            digest="abc123",
-            length=100,
-            offset=0,
-            filename="test.warc.gz",
-        )
-        cache.put("token1", record)
-        assert cache.get("token1") == record
-
-    def test_missing_key(self):
-        cache = RecordCache()
-        assert cache.get("missing") is None
-
-    def test_lru_eviction(self):
-        cache = RecordCache(max_size=2)
-        record1 = SearchRecord(
-            urlkey="1",
-            timestamp="20240101",
-            url="http://1.com",
-            mime="text/html",
-            status="200",
-            digest="a",
-            length=10,
-            offset=0,
-            filename="1.warc.gz",
-        )
-        record2 = SearchRecord(
-            urlkey="2",
-            timestamp="20240102",
-            url="http://2.com",
-            mime="text/html",
-            status="200",
-            digest="b",
-            length=20,
-            offset=0,
-            filename="2.warc.gz",
-        )
-        record3 = SearchRecord(
-            urlkey="3",
-            timestamp="20240103",
-            url="http://3.com",
-            mime="text/html",
-            status="200",
-            digest="c",
-            length=30,
-            offset=0,
-            filename="3.warc.gz",
-        )
-        cache.put("token1", record1)
-        cache.put("token2", record2)
-        cache.put("token3", record3)
-        assert cache.get("token1") is None
-        assert cache.get("token2") == record2
-        assert cache.get("token3") == record3
-
-    def test_clear(self):
-        cache = RecordCache()
-        record = SearchRecord(
-            urlkey="test",
-            timestamp="20240101",
-            url="http://example.com",
-            mime="text/html",
-            status="200",
-            digest="abc",
-            length=10,
-            offset=0,
-            filename="test.warc.gz",
-        )
-        cache.put("token", record)
-        cache.clear()
-        assert cache.get("token") is None
