@@ -27,7 +27,6 @@ class CrawlIndexClient:
                 CrawlInfo(
                     id=item["id"],
                     name=item.get("name", ""),
-                    cdx_api=item.get("cdx_api", ""),
                     time_from=item.get("time_from", ""),
                     time_to=item.get("time_to", ""),
                 )
