@@ -17,10 +17,7 @@ build-backend = "uv_build"
 cc = "commoncrawl_fsspec.filesystem.CommonCrawlFileSystem"
 
 [project.optional-dependencies]
-duckdb = ["duckdb>=1.0.0"]
-warcio = ["warcio>=1.7.0"]
 examples = ["click>=8.1.0", "rich>=13.0.0"]
-all = ["commoncrawl-fsspec[duckdb,warcio]"]
 
 [dependency-groups]
 dev = [
