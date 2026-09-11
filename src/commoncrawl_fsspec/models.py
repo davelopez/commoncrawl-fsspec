@@ -12,7 +12,6 @@ class CrawlInfo:
 
     id: str
     name: str
-    cdx_api: str
     time_from: str
     time_to: str
 
@@ -24,18 +23,3 @@ class WarcFileInfo:
     name: str
     size: int
     last_modified: Optional[float] = None
-
-
-@dataclass(frozen=True)
-class SearchRecord:
-    """A single search result record from Common Crawl."""
-
-    urlkey: str
-    timestamp: str
-    url: str
-    mime: str
-    status: str
-    digest: str
-    length: int
-    offset: int
-    filename: str
