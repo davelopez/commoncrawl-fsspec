@@ -3,17 +3,23 @@
 from __future__ import annotations
 
 import gzip
+import io
 import logging
+from collections import OrderedDict
 from email.utils import parsedate_to_datetime
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import fsspec
+import requests
 
 from ..constants import DATA_BASE_URL
 from ..models import WarcFileInfo
 from .http_client import HttpClient
 
 logger = logging.getLogger(__name__)
+
+MAX_MANIFEST_CACHE_ENTRIES = 16
+MAX_DECOMPRESSED_MANIFEST_SIZE = 512 * 1024 * 1024  # 512 MB
 
 
 class S3ListingClient:
@@ -22,7 +28,7 @@ class S3ListingClient:
     def __init__(self, http_client: Optional[HttpClient] = None):
         self.http_client = http_client or HttpClient()
         self._http_fs = None
-        self._manifest_cache: Dict[Tuple[str, str], List[str]] = {}
+        self._manifest_cache: OrderedDict[Tuple[str, str], List[str]] = OrderedDict()
 
     @property
     def http_fs(self):
@@ -38,14 +44,32 @@ class S3ListingClient:
         key = (crawl_id, file_type)
         cached = self._manifest_cache.get(key)
         if cached is not None:
+            self._manifest_cache.move_to_end(key)
             return cached
 
         raw = self.http_client.get_bytes(self._manifest_url(crawl_id, file_type))
-        paths = [
-            line.strip() for line in gzip.decompress(raw).decode("utf-8").splitlines()
-        ]
+        chunks: List[bytes] = []
+        total_size = 0
+        with gzip.GzipFile(fileobj=io.BytesIO(raw)) as gz:
+            while True:
+                chunk = gz.read(65536)
+                if not chunk:
+                    break
+                total_size += len(chunk)
+                if total_size > MAX_DECOMPRESSED_MANIFEST_SIZE:
+                    raise ValueError(
+                        f"Decompressed manifest exceeds "
+                        f"{MAX_DECOMPRESSED_MANIFEST_SIZE} bytes"
+                    )
+                chunks.append(chunk)
+        decompressed = b"".join(chunks)
+        paths = [line.strip() for line in decompressed.decode("utf-8").splitlines()]
         paths = [path for path in paths if path]
+
         self._manifest_cache[key] = paths
+        self._manifest_cache.move_to_end(key)
+        while len(self._manifest_cache) > MAX_MANIFEST_CACHE_ENTRIES:
+            self._manifest_cache.popitem(last=False)
         return paths
 
     def _iter_files(self, crawl_id: str, segment_id: str, file_type: str) -> List[str]:
@@ -105,7 +129,8 @@ class S3ListingClient:
                     parsedate_to_datetime(last_modified) if last_modified else None
                 ),
             }
-        except Exception:
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as exc:
+            logger.warning("Failed to get file info for %s: %s", s3_key, exc)
             return None
 
     def open(self, s3_key: str, mode: str = "rb") -> object:
