@@ -1,7 +1,7 @@
 """Tests for crawl index client."""
 
-import pytest
 import responses
+
 from commoncrawl_fsspec.clients.crawl_index_client import CrawlIndexClient
 from commoncrawl_fsspec.clients.http_client import HttpClient
 from commoncrawl_fsspec.constants import COLLINFO_URL

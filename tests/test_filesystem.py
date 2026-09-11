@@ -4,8 +4,9 @@ import gzip
 
 import pytest
 import responses
-from commoncrawl_fsspec.filesystem import CommonCrawlFileSystem
+
 from commoncrawl_fsspec.constants import COLLINFO_URL
+from commoncrawl_fsspec.filesystem import CommonCrawlFileSystem
 
 
 class TestCommonCrawlFileSystem:

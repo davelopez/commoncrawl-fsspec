@@ -2,6 +2,7 @@
 
 import pytest
 import responses
+
 from commoncrawl_fsspec.clients.http_client import HttpClient
 from commoncrawl_fsspec.constants import COLLINFO_URL, DATA_BASE_URL
 from commoncrawl_fsspec.filesystem import CommonCrawlFileSystem
@@ -80,12 +81,12 @@ class TestBoundedManifestCache:
 
     @responses.activate
     def test_cache_eviction(self):
+        import gzip
+
         from commoncrawl_fsspec.clients.s3_listing_client import (
             MAX_MANIFEST_CACHE_ENTRIES,
             S3ListingClient,
         )
-
-        import gzip
 
         client = S3ListingClient()
 

@@ -1,6 +1,7 @@
 """Tests for WARC record fetcher."""
 
 import responses
+
 from commoncrawl_fsspec.clients.http_client import HttpClient
 from commoncrawl_fsspec.clients.warc_fetcher import WarcRecordFetcher
 from commoncrawl_fsspec.constants import DATA_BASE_URL

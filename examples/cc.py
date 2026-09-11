@@ -16,10 +16,10 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from rich.console import Console
-    from rich.table import Table
-    from rich.panel import Panel
     from rich import box
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
 except ImportError:
     print(
         "Error: rich is required. Install with: pip install commoncrawl-fsspec[examples]"
@@ -97,7 +97,7 @@ def render_entries(
     console.print(table)
 
     if show_numbers:
-        console.print(f"\n[dim]Type a number to navigate, or use commands below[/dim]")
+        console.print("\n[dim]Type a number to navigate, or use commands below[/dim]")
     else:
         console.print(
             f"\n[dim]{len(dir_paths)} dir(s), {len(file_paths)} file(s)[/dim]"
@@ -254,12 +254,13 @@ def interactive_shell(start_path: str = "/") -> None:
                     )
                     if len(data) > 4000:
                         console.print(
-                            f"[dim]... truncated (showing first 4000 chars)[/dim]"
+                            "[dim]... truncated (showing first 4000 chars)[/dim]"
                         )
                 except UnicodeDecodeError:
                     console.print(
                         Panel(
-                            f"[yellow]Binary content[/yellow] — use [bold]dl[/bold] to save.\n\nSize: [green]{format_size(len(data))}[/green]",
+                            f"[yellow]Binary content[/yellow] — use [bold]dl[/bold] to save."
+                            f"\n\nSize: [green]{format_size(len(data))}[/green]",
                             title=f"[bold]📄 {target}[/bold]",
                             border_style="yellow",
                         )
@@ -281,7 +282,8 @@ def interactive_shell(start_path: str = "/") -> None:
                 out = Path(output)
                 out.write_bytes(data)
                 console.print(
-                    f"[bold green]✓ Downloaded[/bold green] [cyan]{format_size(len(data))}[/cyan] → [bold]{out}[/bold]"
+                    f"[bold green]✓ Downloaded[/bold green] "
+                    f"[cyan]{format_size(len(data))}[/cyan] → [bold]{out}[/bold]"
                 )
 
             elif cmd == "info":
@@ -329,7 +331,8 @@ def interactive_shell(start_path: str = "/") -> None:
                     entry = fs.info(target)
                     if entry.get("type") == "file":
                         console.print(
-                            f"[dim]'{target}' is a file. Use[/dim] [bold]cat {idx + 1}[/bold] [dim]to view it.[/dim]"
+                            f"[dim]'{target}' is a file. Use[/dim] "
+                            f"[bold]cat {idx + 1}[/bold] [dim]to view it.[/dim]"
                         )
                         continue
                 except Exception:
@@ -423,11 +426,12 @@ def cat(path: str):
             )
         )
         if len(data) > 4000:
-            console.print(f"[dim]... truncated (showing first 4000 chars)[/dim]")
+            console.print("[dim]... truncated (showing first 4000 chars)[/dim]")
     except UnicodeDecodeError:
         console.print(
             Panel(
-                f"[yellow]Binary content[/yellow] — use [bold]cc download[/bold] to save to disk.\n\nSize: [green]{format_size(len(data))}[/green]",
+                f"[yellow]Binary content[/yellow] — use [bold]cc download[/bold] to save to disk."
+                f"\n\nSize: [green]{format_size(len(data))}[/green]",
                 title=f"[bold]📄 {path}[/bold]",
                 border_style="yellow",
             )
@@ -452,7 +456,8 @@ def download(path: str, output: str):
 
     out.write_bytes(data)
     console.print(
-        f"[bold green]✓ Downloaded[/bold green] [cyan]{format_size(len(data))}[/cyan] → [bold]{out}[/bold]"
+        f"[bold green]✓ Downloaded[/bold green] "
+        f"[cyan]{format_size(len(data))}[/cyan] → [bold]{out}[/bold]"
     )
 
 

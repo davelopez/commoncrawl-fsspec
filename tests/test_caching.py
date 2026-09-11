@@ -1,6 +1,7 @@
 """Tests for caching utilities."""
 
 import time
+
 from commoncrawl_fsspec.caching import CrawlListCache
 
 

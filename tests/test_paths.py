@@ -1,6 +1,7 @@
 """Tests for path parsing and building."""
 
 import pytest
+
 from commoncrawl_fsspec.paths import PathKind, PathResolver
 
 
