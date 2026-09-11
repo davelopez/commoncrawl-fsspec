@@ -6,6 +6,24 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+VALID_FILE_TYPES = frozenset({"warc", "wet", "wat"})
+
+
+def _validate_path_component(value: str, name: str) -> str:
+    """Validate a path component is safe for URL/S3 key interpolation."""
+    if not value or ".." in value or "//" in value:
+        raise ValueError(f"Invalid {name}: {value!r}")
+    return value
+
+
+def _validate_file_type(value: str) -> str:
+    """Validate file_type against the allowed set."""
+    if value not in VALID_FILE_TYPES:
+        raise ValueError(
+            f"Invalid file_type: {value!r}. Must be one of {sorted(VALID_FILE_TYPES)}"
+        )
+    return value
+
 
 class PathKind(str, Enum):
     """Kinds of virtual paths."""
@@ -57,34 +75,39 @@ class PathResolver:
                 return VirtualPath(kind=PathKind.CRAWLS, raw_path=path)
             elif len(parts) == 2:
                 return VirtualPath(
-                    kind=PathKind.CRAWL, crawl_id=parts[1], raw_path=path
+                    kind=PathKind.CRAWL,
+                    crawl_id=_validate_path_component(parts[1], "crawl_id"),
+                    raw_path=path,
                 )
             elif len(parts) == 3 and parts[2] == "segments":
                 return VirtualPath(
-                    kind=PathKind.SEGMENTS, crawl_id=parts[1], raw_path=path
+                    kind=PathKind.SEGMENTS,
+                    crawl_id=_validate_path_component(parts[1], "crawl_id"),
+                    raw_path=path,
                 )
             elif len(parts) == 4:
                 return VirtualPath(
                     kind=PathKind.SEGMENT,
-                    crawl_id=parts[1],
-                    segment_id=parts[3],
+                    crawl_id=_validate_path_component(parts[1], "crawl_id"),
+                    segment_id=_validate_path_component(parts[3], "segment_id"),
                     raw_path=path,
                 )
             elif len(parts) == 5:
                 return VirtualPath(
                     kind=PathKind.FILE_TYPE,
-                    crawl_id=parts[1],
-                    segment_id=parts[3],
-                    file_type=parts[4],
+                    crawl_id=_validate_path_component(parts[1], "crawl_id"),
+                    segment_id=_validate_path_component(parts[3], "segment_id"),
+                    file_type=_validate_file_type(parts[4]),
                     raw_path=path,
                 )
             elif len(parts) >= 6:
                 filename = "/".join(parts[5:])
+                _validate_path_component(filename, "filename")
                 return VirtualPath(
                     kind=PathKind.WARC_FILE,
-                    crawl_id=parts[1],
-                    segment_id=parts[3],
-                    file_type=parts[4],
+                    crawl_id=_validate_path_component(parts[1], "crawl_id"),
+                    segment_id=_validate_path_component(parts[3], "segment_id"),
+                    file_type=_validate_file_type(parts[4]),
                     filename=filename,
                     raw_path=path,
                 )
