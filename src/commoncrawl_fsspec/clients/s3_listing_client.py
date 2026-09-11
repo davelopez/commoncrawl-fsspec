@@ -58,8 +58,7 @@ class S3ListingClient:
                 total_size += len(chunk)
                 if total_size > MAX_DECOMPRESSED_MANIFEST_SIZE:
                     raise ValueError(
-                        f"Decompressed manifest exceeds "
-                        f"{MAX_DECOMPRESSED_MANIFEST_SIZE} bytes"
+                        f"Decompressed manifest exceeds {MAX_DECOMPRESSED_MANIFEST_SIZE} bytes"
                     )
                 chunks.append(chunk)
         decompressed = b"".join(chunks)
@@ -92,13 +91,10 @@ class S3ListingClient:
     def list_segments(self, crawl_id: str) -> List[WarcFileInfo]:
         """List segments for a crawl via the warc.paths.gz manifest."""
         return [
-            WarcFileInfo(name=segment_id, size=0)
-            for segment_id in self._iter_segments(crawl_id)
+            WarcFileInfo(name=segment_id, size=0) for segment_id in self._iter_segments(crawl_id)
         ]
 
-    def list_files(
-        self, crawl_id: str, segment_id: str, file_type: str
-    ) -> List[WarcFileInfo]:
+    def list_files(self, crawl_id: str, segment_id: str, file_type: str) -> List[WarcFileInfo]:
         """List files within a segment's file-type directory via manifest."""
         entries = []
         for path in self._iter_files(crawl_id, segment_id, file_type):
@@ -125,9 +121,7 @@ class S3ListingClient:
             return {
                 "Name": s3_key.split("/")[-1],
                 "Size": int(resp.headers.get("Content-Length", 0)),
-                "LastModified": (
-                    parsedate_to_datetime(last_modified) if last_modified else None
-                ),
+                "LastModified": (parsedate_to_datetime(last_modified) if last_modified else None),
             }
         except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as exc:
             logger.warning("Failed to get file info for %s: %s", s3_key, exc)

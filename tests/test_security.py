@@ -39,9 +39,7 @@ class TestPathTraversalValidation:
 
     def test_traversal_in_filename_rejected(self):
         with pytest.raises(ValueError):
-            PathResolver.parse(
-                "/crawls/CC-MAIN-2024-33/segments/00001/warc/../../etc/passwd"
-            )
+            PathResolver.parse("/crawls/CC-MAIN-2024-33/segments/00001/warc/../../etc/passwd")
 
     def test_valid_paths_still_work(self):
         vp = PathResolver.parse("/crawls/CC-MAIN-2024-33")

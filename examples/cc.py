@@ -21,9 +21,7 @@ try:
     from rich.panel import Panel
     from rich.table import Table
 except ImportError:
-    print(
-        "Error: rich is required. Install with: pip install commoncrawl-fsspec[examples]"
-    )
+    print("Error: rich is required. Install with: pip install commoncrawl-fsspec[examples]")
     sys.exit(1)
 
 console = Console()
@@ -99,9 +97,7 @@ def render_entries(
     if show_numbers:
         console.print("\n[dim]Type a number to navigate, or use commands below[/dim]")
     else:
-        console.print(
-            f"\n[dim]{len(dir_paths)} dir(s), {len(file_paths)} file(s)[/dim]"
-        )
+        console.print(f"\n[dim]{len(dir_paths)} dir(s), {len(file_paths)} file(s)[/dim]")
 
     return dir_paths, file_paths
 
@@ -237,9 +233,7 @@ def interactive_shell(start_path: str = "/") -> None:
                         with fs.open(target, "rb") as f:
                             data = f.read()
                     except Exception as e:
-                        console.print(
-                            f"[bold red]Error:[/bold red] {e}", soft_wrap=True
-                        )
+                        console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
                         continue
 
                 try:
@@ -253,9 +247,7 @@ def interactive_shell(start_path: str = "/") -> None:
                         )
                     )
                     if len(data) > 4000:
-                        console.print(
-                            "[dim]... truncated (showing first 4000 chars)[/dim]"
-                        )
+                        console.print("[dim]... truncated (showing first 4000 chars)[/dim]")
                 except UnicodeDecodeError:
                     console.print(
                         Panel(
@@ -274,9 +266,7 @@ def interactive_shell(start_path: str = "/") -> None:
                         with fs.open(target, "rb") as f:
                             data = f.read()
                     except Exception as e:
-                        console.print(
-                            f"[bold red]Error:[/bold red] {e}", soft_wrap=True
-                        )
+                        console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
                         continue
 
                 out = Path(output)
@@ -291,9 +281,7 @@ def interactive_shell(start_path: str = "/") -> None:
                     try:
                         entry = fs.info(target)
                     except Exception as e:
-                        console.print(
-                            f"[bold red]Error:[/bold red] {e}", soft_wrap=True
-                        )
+                        console.print(f"[bold red]Error:[/bold red] {e}", soft_wrap=True)
                         continue
 
                 table = Table(box=box.ROUNDED, show_header=False)
@@ -316,9 +304,7 @@ def interactive_shell(start_path: str = "/") -> None:
                             val = format_timestamp(val)
                         table.add_row(label, str(val))
 
-                console.print(
-                    Panel(table, title="[bold]📋 File Info[/bold]", border_style="blue")
-                )
+                console.print(Panel(table, title="[bold]📋 File Info[/bold]", border_style="blue"))
             continue
 
         # --- Try to parse as a number (navigation) ---

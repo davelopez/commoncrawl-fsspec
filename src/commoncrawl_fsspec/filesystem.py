@@ -107,9 +107,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
                 for ft in ("warc", "wet", "wat")
             ]
         elif vp.kind == PathKind.FILE_TYPE:
-            files = self.s3_listing_client.list_files(
-                vp.crawl_id, vp.segment_id, vp.file_type
-            )
+            files = self.s3_listing_client.list_files(vp.crawl_id, vp.segment_id, vp.file_type)
             entries = [
                 {
                     "name": PathResolver.build(

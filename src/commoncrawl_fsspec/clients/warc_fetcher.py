@@ -22,9 +22,7 @@ class WarcRecordFetcher:
         url = f"{DATA_BASE_URL}/{filename}"
         return self.http_client.get_range(url, offset, offset + length)
 
-    def fetch_record_stream(
-        self, filename: str, offset: int, length: int
-    ) -> io.BytesIO:
+    def fetch_record_stream(self, filename: str, offset: int, length: int) -> io.BytesIO:
         """Fetch a WARC record and return as a BytesIO stream."""
         data = self.fetch_record(filename, offset, length)
         return io.BytesIO(data)

@@ -19,9 +19,7 @@ def _validate_path_component(value: str, name: str) -> str:
 def _validate_file_type(value: str) -> str:
     """Validate file_type against the allowed set."""
     if value not in VALID_FILE_TYPES:
-        raise ValueError(
-            f"Invalid file_type: {value!r}. Must be one of {sorted(VALID_FILE_TYPES)}"
-        )
+        raise ValueError(f"Invalid file_type: {value!r}. Must be one of {sorted(VALID_FILE_TYPES)}")
     return value
 
 
@@ -50,9 +48,7 @@ class VirtualPath:
 
     def to_s3_prefix(self) -> str:
         """Build the S3 prefix for this path's file-type directory."""
-        return (
-            f"crawl-data/{self.crawl_id}/segments/{self.segment_id}/{self.file_type}/"
-        )
+        return f"crawl-data/{self.crawl_id}/segments/{self.segment_id}/{self.file_type}/"
 
     def to_s3_key(self) -> str:
         """Build the full S3 key for this path's WARC file."""

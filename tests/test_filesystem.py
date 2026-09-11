@@ -16,9 +16,7 @@ class TestCommonCrawlFileSystem:
     def test_ls_segments_from_manifest(self):
         """Test listing segments from a crawl manifest."""
         crawl_id = "CC-MAIN-2026-25"
-        manifest_url = (
-            f"https://data.commoncrawl.org/crawl-data/{crawl_id}/warc.paths.gz"
-        )
+        manifest_url = f"https://data.commoncrawl.org/crawl-data/{crawl_id}/warc.paths.gz"
         manifest_lines = "\n".join(
             [
                 f"crawl-data/{crawl_id}/segments/1780687572080.85/warc/file-00000.warc.gz",
@@ -47,13 +45,8 @@ class TestCommonCrawlFileSystem:
         crawl_id = "CC-MAIN-2026-24"
         segment_id = "1780687572080.85"
         file_type = "warc"
-        manifest_url = (
-            f"https://data.commoncrawl.org/crawl-data/{crawl_id}/{file_type}.paths.gz"
-        )
-        file_path = (
-            f"crawl-data/{crawl_id}/segments/{segment_id}/{file_type}/"
-            "file-00000.warc.gz"
-        )
+        manifest_url = f"https://data.commoncrawl.org/crawl-data/{crawl_id}/{file_type}.paths.gz"
+        file_path = f"crawl-data/{crawl_id}/segments/{segment_id}/{file_type}/file-00000.warc.gz"
         responses.add(
             responses.GET,
             manifest_url,
@@ -132,9 +125,7 @@ class TestCommonCrawlFileSystem:
         segment_id = "1780687572080.85"
         file_type = "warc"
         file_name = "file-00000.warc.gz"
-        file_path = (
-            f"crawl-data/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}"
-        )
+        file_path = f"crawl-data/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}"
         responses.add(
             responses.HEAD,
             f"https://data.commoncrawl.org/{file_path}",
@@ -146,13 +137,9 @@ class TestCommonCrawlFileSystem:
         )
 
         fs = CommonCrawlFileSystem()
-        info = fs.info(
-            f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}"
-        )
+        info = fs.info(f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}")
 
-        assert info["name"] == (
-            f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}"
-        )
+        assert info["name"] == (f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}/{file_name}")
         assert info["type"] == "file"
         assert info["size"] == 1234
 

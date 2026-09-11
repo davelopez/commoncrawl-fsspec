@@ -44,9 +44,7 @@ class TestPathResolverParse:
         assert vp.file_type == "warc"
 
     def test_warc_file_path(self):
-        vp = PathResolver.parse(
-            "/crawls/CC-MAIN-2024-33/segments/00001/warc/CC-MAIN-2024.warc.gz"
-        )
+        vp = PathResolver.parse("/crawls/CC-MAIN-2024-33/segments/00001/warc/CC-MAIN-2024.warc.gz")
         assert vp.kind == PathKind.WARC_FILE
         assert vp.crawl_id == "CC-MAIN-2024-33"
         assert vp.segment_id == "00001"
@@ -81,9 +79,7 @@ class TestPathResolverBuild:
 
     def test_build_segment(self):
         assert (
-            PathResolver.build(
-                PathKind.SEGMENT, crawl_id="CC-MAIN-2024-33", segment_id="00001"
-            )
+            PathResolver.build(PathKind.SEGMENT, crawl_id="CC-MAIN-2024-33", segment_id="00001")
             == "/crawls/CC-MAIN-2024-33/segments/00001"
         )
 
