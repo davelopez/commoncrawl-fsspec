@@ -53,15 +53,6 @@ class TestCommonCrawlFileSystem:
             body=gzip.compress(file_path.encode("utf-8")),
             status=200,
         )
-        responses.add(
-            responses.HEAD,
-            f"https://data.commoncrawl.org/{file_path}",
-            headers={
-                "Content-Length": "1234",
-                "Last-Modified": "Sat, 06 Jun 2026 00:52:42 GMT",
-            },
-            status=200,
-        )
 
         fs = CommonCrawlFileSystem()
         entries = fs.ls(f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}")
@@ -70,7 +61,34 @@ class TestCommonCrawlFileSystem:
         assert entries[0]["name"] == (
             f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}/file-00000.warc.gz"
         )
-        assert entries[0]["size"] == 1234
+        assert entries[0]["size"] == 0
+
+    @responses.activate
+    def test_ls_files_no_head_requests(self):
+        """Listing a manifest-backed directory must not issue per-file HEAD requests."""
+        crawl_id = "CC-MAIN-2026-30"
+        segment_id = "1783663951123.52"
+        file_type = "warc"
+        manifest_url = f"https://data.commoncrawl.org/crawl-data/{crawl_id}/{file_type}.paths.gz"
+        file_paths = [
+            f"crawl-data/{crawl_id}/segments/{segment_id}/{file_type}/file-{i:05d}.warc.gz"
+            for i in range(1000)
+        ]
+        manifest_body = "\n".join(file_paths).encode("utf-8")
+        responses.add(
+            responses.GET,
+            manifest_url,
+            body=gzip.compress(manifest_body),
+            status=200,
+        )
+
+        fs = CommonCrawlFileSystem()
+        entries = fs.ls(f"/crawls/{crawl_id}/segments/{segment_id}/{file_type}")
+
+        assert len(entries) == 1000
+        assert all(entry["size"] == 0 for entry in entries)
+        assert not any(call.request.method == "HEAD" for call in responses.calls)
+        assert sum(call.request.method == "GET" for call in responses.calls) == 1
 
     @responses.activate
     def test_ls_root(self):
