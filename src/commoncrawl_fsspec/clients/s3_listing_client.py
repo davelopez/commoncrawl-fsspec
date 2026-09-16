@@ -95,23 +95,15 @@ class S3ListingClient:
         ]
 
     def list_files(self, crawl_id: str, segment_id: str, file_type: str) -> List[WarcFileInfo]:
-        """List files within a segment's file-type directory via manifest."""
-        entries = []
-        for path in self._iter_files(crawl_id, segment_id, file_type):
-            name = path.split("/")[-1]
-            info = self.get_file_info(path)
-            entries.append(
-                WarcFileInfo(
-                    name=name,
-                    size=info["Size"] if info else 0,
-                    last_modified=(
-                        info["LastModified"].timestamp()
-                        if info and info.get("LastModified")
-                        else None
-                    ),
-                )
-            )
-        return entries
+        """List files within a segment's file-type directory via manifest.
+
+        Returns entries with size=0 and last_modified=None. Use get_file_info()
+        for exact metadata on a specific file.
+        """
+        return [
+            WarcFileInfo(name=path.rsplit("/", 1)[-1], size=0, last_modified=None)
+            for path in self._iter_files(crawl_id, segment_id, file_type)
+        ]
 
     def get_file_info(self, s3_key: str) -> Optional[dict]:
         """Get info for a single Common Crawl object."""
