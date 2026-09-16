@@ -10,17 +10,24 @@ A command-line tool to browse and download data from the Common Crawl archive us
 
 ## Installation
 
-Install the package with examples extras:
+All commands below are run from the repository root (the directory containing `pyproject.toml`).
+The environment is managed with [uv](https://docs.astral.sh/uv/) — install it first if you haven't
+already — and the CLI needs the `examples` extra:
 
 ```bash
-pip install commoncrawl-fsspec[examples]
+uv sync --extra examples
 ```
 
-Or install from source:
+That installs the `examples` extra dependencies, which the CLI requires. If you consume the
+plugin from another project instead, add it with the extra:
 
 ```bash
-pip install -e "../.[examples]"
+uv add "commoncrawl-fsspec[examples]"
 ```
+
+> **Tip:** adding `--extra examples` to any `uv run` command resolves the extra on the fly, e.g.
+> `uv run --extra examples python -m examples.cc ls /`. Without it (and without the `uv sync`
+> above) you will get `ModuleNotFoundError: No module named 'rich'`.
 
 ## Usage
 
@@ -29,7 +36,7 @@ pip install -e "../.[examples]"
 Launch the interactive browser:
 
 ```bash
-python cc.py interactive
+uv run python -m examples.cc interactive
 ```
 
 This opens a shell where you can navigate the filesystem by typing entry numbers:
@@ -46,8 +53,8 @@ cc:/// > 1
 📂 /crawls
   №  Name                          Type       Size
   ─────────────────────────────────────────────────
-  1  /crawls/CC-MAIN-2024-10       📁 Dir        —
-  2  /crawls/CC-MAIN-2024-08       📁 Dir        —
+  1  /crawls/CC-MAIN-2026-34       📁 Dir        —
+  2  /crawls/CC-MAIN-2026-30       📁 Dir        —
 ...
 ```
 
@@ -72,44 +79,55 @@ cc:/// > 1
 List top-level directories:
 
 ```bash
-python cc.py ls /
+uv run python -m examples.cc ls /
 ```
 
-List available crawls:
+List available crawls (newest first):
 
 ```bash
-python cc.py ls /crawls
+uv run python -m examples.cc ls /crawls
 ```
 
 List segments for a specific crawl:
 
 ```bash
-python cc.py ls /crawls/CC-MAIN-2024-10/segments
+uv run python -m examples.cc ls /crawls/CC-MAIN-2026-34/segments
 ```
 
 List WARC files in a segment:
 
 ```bash
-python cc.py ls /crawls/CC-MAIN-2024-10/segments/141.19/warc
+uv run python -m examples.cc ls /crawls/CC-MAIN-2026-34/segments/1786091384908.68/warc
 ```
 
 Read the contents of a file:
 
 ```bash
-python cc.py cat /crawls/CC-MAIN-2024-10/segments/141.19/warc/example.warc.gz
+uv run python -m examples.cc cat \
+  /crawls/CC-MAIN-2026-34/segments/1786091384908.68/wet/CC-MAIN-20260807101845-20260807131845-00000.warc.wet.gz
 ```
 
-Download a WARC file to a local file:
+Download a file to a local file:
 
 ```bash
-python cc.py download /crawls/CC-MAIN-2024-10/segments/141.19/warc/example.warc.gz output.warc
+uv run python -m examples.cc download \
+  /crawls/CC-MAIN-2026-34/segments/1786091384908.68/warc/CC-MAIN-20260807101845-20260807131845-00000.warc.gz \
+  record.warc.gz
 ```
 
 Get metadata about a file:
 
 ```bash
-python cc.py info /crawls/CC-MAIN-2024-10/segments/141.19/warc/example.warc
+uv run python -m examples.cc info \
+  /crawls/CC-MAIN-2026-34/segments/1786091384908.68/warc/CC-MAIN-20260807101845-20260807131845-00000.warc.gz
 ```
+
+> The crawl, segment and file names above are examples — run `ls /crawls` to discover the current
+> ones. WARC files are roughly 1 GB each, WET/WAT files are smaller (~60 MB / ~150 MB), so prefer
+> those for a quick test.
+
+> `cat` loads the whole file into memory and WARC/WET/WAT files are gzip-compressed, so it reports
+> "binary content". Use `download` plus `gzip -dc` to inspect the records.
 
 ## Commands Reference
 
@@ -125,12 +143,27 @@ python cc.py info /crawls/CC-MAIN-2024-10/segments/141.19/warc/example.warc
 ### Browse the latest crawl
 
 ```bash
-python cc.py ls /crawls | tail -1
+uv run python -m examples.cc ls /crawls
 ```
 
-### Download and inspect a WARC file
+### Download and inspect a WET file
+
+WET files are much smaller than WARC files, which makes them handy for a quick test:
 
 ```bash
-python cc.py download /crawls/CC-MAIN-2024-10/segments/141.19/warc/example.warc.gz record.warc
-cat record.warc
+uv run python -m examples.cc download \
+  /crawls/CC-MAIN-2026-34/segments/1786091384908.68/wet/CC-MAIN-20260807101845-20260807131845-00000.warc.wet.gz \
+  record.warc.wet.gz
+
+gzip -dc record.warc.wet.gz | head -n 1
+```
+
+### Keep long paths when piping
+
+Rich truncates long paths to fit the output width. When piping the output somewhere else, set
+`COLUMNS` so full paths survive:
+
+```bash
+COLUMNS=200 uv run python -m examples.cc ls \
+  /crawls/CC-MAIN-2026-34/segments/1786091384908.68/warc | head
 ```

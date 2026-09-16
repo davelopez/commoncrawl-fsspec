@@ -75,21 +75,19 @@ def render_entries(
 
         if etype == "directory":
             dir_paths.append(name)
-            table.add_row(
-                f"{len(dir_paths)}" if show_numbers else "",
-                name,
-                "📁 Dir",
-                "—",
-            )
+            number = len(dir_paths)
+            kind = "📁 Dir"
+            size_text = "—"
         else:
             file_paths.append(name)
-            idx = len(dir_paths) + len(file_paths)
-            table.add_row(
-                f"{idx}" if show_numbers else "",
-                name,
-                "📄 File",
-                format_size(size),
-            )
+            number = len(dir_paths) + len(file_paths)
+            kind = "📄 File"
+            size_text = format_size(size)
+
+        cells = [name, kind, size_text]
+        if show_numbers:
+            cells.insert(0, f"{number}")
+        table.add_row(*cells)
 
     console.print(f"\n[bold]📂 {path}[/bold]")
     console.print(table)
