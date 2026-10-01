@@ -47,7 +47,15 @@ class S3ListingClient:
             self._manifest_cache.move_to_end(key)
             return cached
 
-        raw = self.http_client.get_bytes(self._manifest_url(crawl_id, file_type))
+        url = self._manifest_url(crawl_id, file_type)
+        try:
+            raw = self.http_client.get_bytes(url)
+        except requests.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code == 404:
+                raise FileNotFoundError(
+                    f"No {file_type} manifest for crawl {crawl_id} at {url}"
+                ) from exc
+            raise
         chunks: List[bytes] = []
         total_size = 0
         with gzip.GzipFile(fileobj=io.BytesIO(raw)) as gz:
