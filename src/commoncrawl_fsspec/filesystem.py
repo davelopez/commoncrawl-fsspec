@@ -11,7 +11,7 @@ from .clients.crawl_index_client import CrawlIndexClient
 from .clients.http_client import HttpClient
 from .clients.s3_listing_client import S3ListingClient
 from .clients.warc_fetcher import WarcRecordFetcher
-from .constants import DEFAULT_CACHE_TTL
+from .constants import DEFAULT_CACHE_TTL, LEGACY_CRAWL_IDS
 from .paths import PathKind, PathResolver
 
 logger = logging.getLogger(__name__)
@@ -58,9 +58,18 @@ class CommonCrawlFileSystem(AbstractFileSystem):
 
         return crawls
 
+    @staticmethod
+    def _check_crawl_available(crawl_id, path) -> None:
+        """Raise FileNotFoundError for crawls without browsable data."""
+        if crawl_id in LEGACY_CRAWL_IDS:
+            raise FileNotFoundError(
+                f"{path}: legacy crawl {crawl_id} has no browsable data on data.commoncrawl.org"
+            )
+
     def ls(self, path, detail=True, **kwargs):
         """List directory contents."""
         vp = PathResolver.parse(path)
+        self._check_crawl_available(vp.crawl_id, path)
 
         if vp.kind == PathKind.ROOT:
             entries = [
@@ -74,6 +83,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
                     "type": "directory",
                 }
                 for crawl in crawls
+                if crawl.id not in LEGACY_CRAWL_IDS
             ]
         elif vp.kind == PathKind.CRAWL:
             entries = [
@@ -133,6 +143,7 @@ class CommonCrawlFileSystem(AbstractFileSystem):
     def info(self, path):
         """Get info about a path."""
         vp = PathResolver.parse(path)
+        self._check_crawl_available(vp.crawl_id, path)
 
         if vp.kind in (
             PathKind.ROOT,

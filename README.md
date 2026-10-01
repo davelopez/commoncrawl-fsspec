@@ -88,6 +88,8 @@ Navigate the Common Crawl archive structure:
                 └── /crawls/.../wat/    → WAT files
 ```
 
+> **Note:** the legacy 2008–2012 crawls (`CC-MAIN-2008-2009`, `CC-MAIN-2009-2010`, `CC-MAIN-2012`) are listed in collinfo.json but omitted from `/crawls`, because Common Crawl doesn't currently serve browsable data for them.
+
 ## 📖 API Reference
 
 ### `CommonCrawlFileSystem`

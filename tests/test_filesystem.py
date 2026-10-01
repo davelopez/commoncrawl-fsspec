@@ -236,3 +236,50 @@ class TestMissingManifests:
         # urllib3 retries 5xx and surfaces RetryError, a RequestException.
         with pytest.raises(requests.RequestException):
             fs.ls(f"/crawls/{crawl_id}/segments")
+
+
+class TestLegacyCrawls:
+    """Test handling of legacy crawls without browsable data (issue #4)."""
+
+    @responses.activate
+    def test_ls_crawls_hides_legacy_crawls(self):
+        """Legacy crawls from collinfo.json are not listed."""
+        responses.add(
+            responses.GET,
+            COLLINFO_URL,
+            json=[
+                {"id": "CC-MAIN-2013-20", "name": "CC-MAIN-2013-20"},
+                {"id": "CC-MAIN-2012", "name": "CC-MAIN-2012"},
+                {"id": "CC-MAIN-2008-2009", "name": "CC-MAIN-2008-2009"},
+            ],
+            status=200,
+        )
+
+        fs = CommonCrawlFileSystem()
+
+        assert fs.ls("/crawls", detail=False) == ["/crawls/CC-MAIN-2013-20"]
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/crawls/CC-MAIN-2008-2009",
+            "/crawls/CC-MAIN-2008-2009/segments",
+            "/crawls/CC-MAIN-2009-2010/segments/123.45/warc",
+        ],
+    )
+    @responses.activate
+    def test_ls_legacy_crawl_raises_without_requests(self, path):
+        """Browsing into a legacy crawl raises FileNotFoundError without HTTP calls."""
+        fs = CommonCrawlFileSystem()
+
+        with pytest.raises(FileNotFoundError, match="legacy crawl"):
+            fs.ls(path)
+        assert len(responses.calls) == 0
+
+    def test_exists_legacy_crawl(self):
+        """Legacy crawls do not exist; modern crawl directories do."""
+        fs = CommonCrawlFileSystem()
+
+        assert not fs.exists("/crawls/CC-MAIN-2012")
+        assert not fs.isdir("/crawls/CC-MAIN-2012/segments")
+        assert fs.exists("/crawls/CC-MAIN-2013-20")
