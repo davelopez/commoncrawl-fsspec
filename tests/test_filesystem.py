@@ -3,6 +3,7 @@
 import gzip
 
 import pytest
+import requests
 import responses
 
 from commoncrawl_fsspec.constants import COLLINFO_URL
@@ -200,3 +201,38 @@ class TestCommonCrawlFileSystem:
         fs.ls("/crawls")  # populate cache
         fs.invalidate_cache()
         assert fs.crawl_list_cache.get() is None
+
+
+class TestMissingManifests:
+    """Test handling of missing crawl manifests."""
+
+    @responses.activate
+    def test_ls_segments_missing_manifest_raises_file_not_found(self):
+        """A 404 manifest is reported as FileNotFoundError."""
+        crawl_id = "CC-MAIN-2099-01"
+        responses.add(
+            responses.GET,
+            f"https://data.commoncrawl.org/crawl-data/{crawl_id}/warc.paths.gz",
+            status=404,
+        )
+
+        fs = CommonCrawlFileSystem()
+
+        with pytest.raises(FileNotFoundError, match=crawl_id):
+            fs.ls(f"/crawls/{crawl_id}/segments")
+
+    @responses.activate
+    def test_manifest_server_error_is_not_file_not_found(self):
+        """Non-404 manifest errors propagate unchanged."""
+        crawl_id = "CC-MAIN-2099-01"
+        responses.add(
+            responses.GET,
+            f"https://data.commoncrawl.org/crawl-data/{crawl_id}/warc.paths.gz",
+            status=500,
+        )
+
+        fs = CommonCrawlFileSystem()
+
+        # urllib3 retries 5xx and surfaces RetryError, a RequestException.
+        with pytest.raises(requests.RequestException):
+            fs.ls(f"/crawls/{crawl_id}/segments")
